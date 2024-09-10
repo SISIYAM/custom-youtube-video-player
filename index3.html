@@ -89,6 +89,7 @@
       <div class="control-buttons">
         <button id="play-button">Play</button>
         <button id="pause-button">Pause</button>
+        <button id="fullscreen-button">Toggle Fullscreen</button>
       </div>
       <div class="time-controls">
         <button id="rewind-button">-5s</button>
@@ -114,8 +115,9 @@
       var currentTimeElement = document.getElementById("current-time");
       var durationElement = document.getElementById("duration");
       var timeSlider = document.getElementById("time-slider");
+      var videoContainer = document.getElementById("video-container");
 
-      // initialize youTube player
+      // initialize YouTube player
       function onYouTubeIframeAPIReady() {
         player = new YT.Player("ytplayer", {
           height: "100%",
@@ -133,10 +135,10 @@
         updateDuration();
         setInterval(updateTime, 1000);
 
-        // set default playback quality to hd1080 (hd1080)
+        // Set default playback quality to 1080p (hd1080)
         player.setPlaybackQuality("hd1080");
 
-        // set default playback speed to 1x (normal speed)
+        // Set default playback speed to 1x (normal speed)
         document.getElementById("speed-select").value = 1;
       }
 
@@ -201,7 +203,6 @@
         .addEventListener("click", function () {
           var currentTime = player.getCurrentTime();
           var duration = player.getDuration();
-          // ensure time doesn't exceed real duration
           player.seekTo(Math.min(currentTime + 5, duration));
         });
 
@@ -218,6 +219,17 @@
         .addEventListener("change", function () {
           var selectedSpeed = parseFloat(this.value);
           player.setPlaybackRate(selectedSpeed);
+        });
+
+      // fullscreen toggle button
+      document
+        .getElementById("fullscreen-button")
+        .addEventListener("click", function () {
+          if (!document.fullscreenElement) {
+            videoContainer.requestFullscreen();
+          } else {
+            document.exitFullscreen();
+          }
         });
     </script>
   </body>
