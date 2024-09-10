@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Video Control</title>
+    <style>
+      .content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        width: 100%;
+      }
+      #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+      #ytplayer {
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      #overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+      }
+      .control-buttons,
+      .time-controls,
+      .slider-container {
+        margin-top: 10px;
+        text-align: center;
+        width: 100%;
+        max-width: 650px;
+      }
+      .control-buttons button,
+      .time-controls button,
+      .slider-container input {
+        margin: 0 5px;
+      }
+      .time-display {
+        margin-top: 10px;
+        text-align: center;
+      }
+      .slider-container {
+        margin-top: 20px;
+      }
+      .slider-container input[type="range"] {
+        width: 100%;
+      }
+      @media (max-width: 768px) {
+        #video-container {
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <div id="video-container">
+        <div id="ytplayer"></div>
+        <div id="overlay"></div>
+        <!-- Overlay to disable interactions -->
+      </div>
+      <div class="time-display">
+        <span id="current-time">00:00</span> / <span id="duration">00:00</span>
+      </div>
+      <div class="slider-container">
+        <input
+          id="time-slider"
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+          step="1"
+        />
+      </div>
+      <div class="control-buttons">
+        <button id="play-button">Play</button>
+        <button id="pause-button">Pause</button>
+      </div>
+      <div class="time-controls">
+        <button id="rewind-button">-5s</button>
+        <button id="forward-button">+5s</button>
+      </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+      var player;
+      var currentTimeElement = document.getElementById("current-time");
+      var durationElement = document.getElementById("duration");
+      var timeSlider = document.getElementById("time-slider");
+
+      // initialize youTube player
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player("ytplayer", {
+          height: "100%",
+          width: "100%",
+          videoId: "I3N84NZuqRs", // video id
+          events: {
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange,
+          },
+        });
+      }
+
+      // after the player ready update time every seconds
+      function onPlayerReady(event) {
+        updateDuration();
+        setInterval(updateTime, 1000);
+        w;
+      }
+
+      // When the player state changes
+      function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING) {
+          updateDuration();
+          setInterval(updateTime, 1000);
+        }
+      }
+
+      function updateTime() {
+        var currentTime = player.getCurrentTime();
+        var duration = player.getDuration();
+        currentTimeElement.textContent = formatTime(currentTime);
+        durationElement.textContent = formatTime(duration);
+
+        // update slider value
+        timeSlider.value = (currentTime / duration) * 100;
+      }
+
+      function updateDuration() {
+        var duration = player.getDuration();
+        durationElement.textContent = formatTime(duration);
+        timeSlider.max = 100;
+      }
+
+      function formatTime(seconds) {
+        var minutes = Math.floor(seconds / 60);
+        var seconds = Math.floor(seconds % 60);
+        return (
+          (minutes < 10 ? "0" : "") +
+          minutes +
+          ":" +
+          (seconds < 10 ? "0" : "") +
+          seconds
+        );
+      }
+
+      // control buttons
+      document
+        .getElementById("play-button")
+        .addEventListener("click", function () {
+          player.playVideo();
+        });
+
+      document
+        .getElementById("pause-button")
+        .addEventListener("click", function () {
+          player.pauseVideo();
+        });
+
+      document
+        .getElementById("rewind-button")
+        .addEventListener("click", function () {
+          var currentTime = player.getCurrentTime();
+          player.seekTo(Math.max(currentTime - 5, 0));
+        });
+
+      document
+        .getElementById("forward-button")
+        .addEventListener("click", function () {
+          var currentTime = player.getCurrentTime();
+          var duration = player.getDuration();
+          // ensure time dosn'r exists real duration
+          player.seekTo(Math.min(currentTime + 5, duration));
+        });
+
+      // slider
+      timeSlider.addEventListener("input", function () {
+        var duration = player.getDuration();
+        var newTime = (timeSlider.value / 100) * duration;
+        player.seekTo(newTime);
+      });
+    </script>
+  </body>
+</html>
