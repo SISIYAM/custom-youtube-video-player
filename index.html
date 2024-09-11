@@ -55,9 +55,24 @@
       .slider-container input[type="range"] {
         width: 100%;
       }
-      .speed-controls {
+      .speed-controls,
+      .volume-controls {
         margin-top: 20px;
         text-align: center;
+      }
+      #volume-slider {
+        width: 100%;
+        max-width: 640px;
+      }
+      .voulume-section {
+        display: flex;
+        flex-direction: row;
+      }
+      #unmuteBtn {
+        display: none;
+      }
+      #stop-loop {
+        display: none;
       }
       @media (max-width: 768px) {
         #video-container {
@@ -71,7 +86,6 @@
       <div id="video-container">
         <div id="ytplayer"></div>
         <div id="overlay"></div>
-        <!-- Overlay to disable interactions -->
       </div>
       <div class="time-display">
         <span id="current-time">00:00</span> / <span id="duration">00:00</span>
@@ -89,6 +103,8 @@
       <div class="control-buttons">
         <button id="play-button">Play</button>
         <button id="pause-button">Pause</button>
+        <button id="play-loop">Loop</button>
+        <button id="stop-loop">Stop Loop</button>
       </div>
       <div class="time-controls">
         <button id="rewind-button">-5s</button>
@@ -106,6 +122,23 @@
           <option value="2">2x</option>
         </select>
       </div>
+
+      <!-- Volume Controls -->
+      <div class="volume-controls">
+        <label for="volume-slider">Volume: </label>
+        <div class="voulume-section">
+          <button id="muteBtn">Mute</button>
+          <button id="unmuteBtn">Unmute</button>
+          <input
+            id="volume-slider"
+            type="range"
+            min="0"
+            max="100"
+            value="100"
+            step="1"
+          />
+        </div>
+      </div>
     </div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -114,13 +147,18 @@
       var currentTimeElement = document.getElementById("current-time");
       var durationElement = document.getElementById("duration");
       var timeSlider = document.getElementById("time-slider");
+      var volumeSlider = document.getElementById("volume-slider");
+      var currentVolume = 100;
+      // code for start loop and turn off loop
+      var startLoopBtn = document.getElementById("play-loop");
+      var stopLoopBtn = document.getElementById("stop-loop");
+      var isLooping = false;
 
-      // initialize youTube player
       function onYouTubeIframeAPIReady() {
         player = new YT.Player("ytplayer", {
           height: "100%",
           width: "100%",
-          videoId: "I3N84NZuqRs", // video id
+          videoId: "I3N84NZuqRs",
           events: {
             onReady: onPlayerReady,
             onStateChange: onPlayerStateChange,
@@ -128,20 +166,24 @@
         });
       }
 
-      // after the player is ready
       function onPlayerReady(event) {
         updateDuration();
         setInterval(updateTime, 1000);
 
-        // set default playback quality to hd1080 (hd1080)
         player.setPlaybackQuality("hd1080");
-
-        // set default playback speed to 1x (normal speed)
         document.getElementById("speed-select").value = 1;
+
+        // Set initial volume to 100%
+        player.setVolume(100);
+        volumeSlider.value = 100;
       }
 
-      // When the player state changes
       function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.ENDED && isLooping) {
+          player.seekTo(0); // Restart the video from the beginning
+          player.playVideo(); // Automatically start playing again
+        }
+
         if (event.data == YT.PlayerState.PLAYING) {
           updateDuration();
           setInterval(updateTime, 1000);
@@ -154,7 +196,6 @@
         currentTimeElement.textContent = formatTime(currentTime);
         durationElement.textContent = formatTime(duration);
 
-        // update slider value
         timeSlider.value = (currentTime / duration) * 100;
       }
 
@@ -176,7 +217,6 @@
         );
       }
 
-      // control buttons
       document
         .getElementById("play-button")
         .addEventListener("click", function () {
@@ -201,24 +241,55 @@
         .addEventListener("click", function () {
           var currentTime = player.getCurrentTime();
           var duration = player.getDuration();
-          // ensure time doesn't exceed real duration
           player.seekTo(Math.min(currentTime + 5, duration));
         });
 
-      // slider
       timeSlider.addEventListener("input", function () {
         var duration = player.getDuration();
         var newTime = (timeSlider.value / 100) * duration;
         player.seekTo(newTime);
       });
 
-      // Speed control
       document
         .getElementById("speed-select")
         .addEventListener("change", function () {
           var selectedSpeed = parseFloat(this.value);
           player.setPlaybackRate(selectedSpeed);
         });
+
+      volumeSlider.addEventListener("input", function () {
+        player.setVolume(volumeSlider.value);
+      });
+
+      // mute unmute
+      var muteBtn = document.getElementById("muteBtn");
+      var unMuteBtn = document.getElementById("unmuteBtn");
+      muteBtn.addEventListener("click", function () {
+        currentVolume = volumeSlider.value;
+        player.mute();
+        muteBtn.style.display = "none";
+        unMuteBtn.style.display = "block";
+        volumeSlider.value = 0;
+      });
+      unMuteBtn.addEventListener("click", function () {
+        player.unMute();
+        player.setVolume(currentVolume);
+        volumeSlider.value = currentVolume;
+        muteBtn.style.display = "block";
+        unMuteBtn.style.display = "none";
+      });
+
+      startLoopBtn.addEventListener("click", function () {
+        isLooping = true;
+        startLoopBtn.style.display = "none";
+        stopLoopBtn.style.display = "block";
+      });
+
+      stopLoopBtn.addEventListener("click", function () {
+        isLooping = false;
+        startLoopBtn.style.display = "block";
+        stopLoopBtn.style.display = "none";
+      });
     </script>
   </body>
 </html>
